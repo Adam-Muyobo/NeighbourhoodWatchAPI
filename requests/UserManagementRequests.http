@@ -1,0 +1,265 @@
+###
+# nwa-auth-users.http
+# Updated for User Controller Endpoints
+###
+
+@host = http://localhost:8080
+
+###
+# 1) Register Admin (active immediately)
+###
+POST {{host}}/api/auth/register/admin
+Content-Type: application/json
+
+{
+  "name": "John Doe",
+  "email": "johndoe@example.com",
+  "phoneNumber": "+26771234567",
+  "password": "StrongPassword123"
+}
+
+> {%
+    client.test("admin register: status 200", function() {
+        client.assert(response.status === 200, "Admin registration failed");
+        client.global.set("adminEmail", "johndoe@example.com");
+        client.global.set("adminPassword", "StrongPassword123");
+    })
+%}
+
+###
+# 2) Admin login (extract adminId for future privileged calls)
+###
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{adminEmail}}",
+  "password": "{{adminPassword}}"
+}
+
+> {%
+    client.test("admin login: status 200", function() {
+        client.assert(response.status === 200, "Admin login failed");
+        if (response.status === 200) {
+            var user = response.body;
+            client.global.set("adminId", user.id || user.userId);
+        }
+    })
+%}
+
+###
+# 3) Register Member (inactive initially)
+###
+POST {{host}}/api/auth/register/member
+Content-Type: application/json
+
+{
+  "name": "Member One",
+  "email": "member1@nwa.test",
+  "phoneNumber": "+26770000001",
+  "password": "memberpass"
+}
+
+> {%
+    client.test("member register: status 200", function() {
+        client.assert(response.status === 200, "Member registration failed");
+        client.global.set("memberEmail", "member1@nwa.test");
+        client.global.set("memberPassword", "memberpass");
+    })
+%}
+
+###
+# 4) Get member ID for approval (using check endpoint)
+###
+GET {{host}}/api/auth/check/{{memberEmail}}
+Accept: application/json
+
+> {%
+    client.test("get member details: status 200", function() {
+        client.assert(response.status === 200, "Failed to get member details");
+        if (response.status === 200) {
+            var user = response.body;
+            client.global.set("memberId", user.id || user.userId);
+        }
+    })
+%}
+
+###
+# 5) Admin approves member
+###
+POST {{host}}/api/users/{{adminId}}/approve/{{memberId}}
+Content-Type: application/json
+
+> {%
+    client.test("approve member: status 200", function() {
+        client.assert(response.status === 200, "Member approval failed");
+    })
+%}
+
+###
+# 6) Member login after approval (should succeed)
+###
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{memberEmail}}",
+  "password": "{{memberPassword}}"
+}
+
+> {%
+    client.test("member login after approve: status 200", function() {
+        client.assert(response.status === 200, "Member login after approval failed");
+        if (response.status === 200) {
+            var user = response.body;
+            client.global.set("memberLoginUserId", user.id || user.userId);
+        }
+    })
+%}
+
+###
+# 7) Admin suspends the member
+###
+POST {{host}}/api/users/{{adminId}}/suspend/{{memberId}}
+Content-Type: application/json
+
+> {%
+    client.test("suspend member: status 200", function() {
+        client.assert(response.status === 200, "Member suspension failed");
+    })
+%}
+
+###
+# 8) Member tries login (should fail 401 or 403)
+###
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{memberEmail}}",
+  "password": "{{memberPassword}}"
+}
+
+> {%
+    client.test("suspended login: must fail", function() {
+        client.assert(response.status !== 200, "Suspended member should not be able to login");
+        client.assert(response.status === 401 || response.status === 403, "Expected 401 or 403 for suspended user");
+    })
+%}
+
+###
+# 9) Admin reinstates member
+###
+POST {{host}}/api/users/{{adminId}}/reinstate/{{memberId}}
+Content-Type: application/json
+
+> {%
+    client.test("reinstate member: status 200", function() {
+        client.assert(response.status === 200, "Member reinstatement failed");
+    })
+%}
+
+###
+# 10) Member login after reinstatement
+###
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{memberEmail}}",
+  "password": "{{memberPassword}}"
+}
+
+> {%
+    client.test("member login after reinstatement: status 200", function() {
+        client.assert(response.status === 200, "Member login after reinstatement failed");
+    })
+%}
+
+###
+# 11) Admin blocks the member
+###
+POST {{host}}/api/users/{{adminId}}/block/{{memberId}}
+Content-Type: application/json
+
+> {%
+    client.test("blocked member: status 200", function() {
+        client.assert(response.status === 200, "Member blocking failed");
+    })
+%}
+
+###
+# 12) Admin deletes member
+###
+DELETE {{host}}/api/users/{{adminId}}/delete/{{memberId}}
+
+> {%
+    client.test("delete member: status 200", function() {
+        client.assert(response.status === 200, "Member deletion failed");
+    })
+%}
+
+###
+# 13) Confirm user is deleted (GET returns 404)
+###
+GET {{host}}/api/users/{{memberId}}
+Accept: application/json
+
+> {%
+    client.test("confirm deletion: expects 404", function() {
+        client.assert(response.status === 404, "User should not exist after deletion");
+    })
+%}
+
+###
+# 14) Verify member cannot login after deletion
+###
+POST {{host}}/api/auth/login
+Content-Type: application/json
+
+{
+  "identifier": "{{memberEmail}}",
+  "password": "{{memberPassword}}"
+}
+
+> {%
+    client.test("deleted user login: must fail", function() {
+        client.assert(response.status !== 200, "Deleted user should not be able to login");
+    })
+%}
+
+###
+# 15) Test admin creating a new user directly
+###
+POST {{host}}/api/users/admin/{{adminId}}/create
+Content-Type: application/json
+
+{
+  "name": "Created by Admin",
+  "email": "admincreated@nwa.test",
+  "phoneNumber": "+26770000002",
+  "password": "admincreatedpass",
+  "role": "MEMBER"
+}
+
+> {%
+    client.test("admin create user: status 200", function() {
+        client.assert(response.status === 200, "Admin user creation failed");
+        if (response.status === 200) {
+            var user = response.body;
+            client.global.set("adminCreatedUserId", user.id || user.userId);
+        }
+    })
+%}
+
+###
+# 16) Get all users (public endpoint)
+###
+GET {{host}}/api/users
+Accept: application/json
+
+> {%
+    client.test("get all users: status 200", function() {
+        client.assert(response.status === 200, "Get all users failed");
+    })
+%}
