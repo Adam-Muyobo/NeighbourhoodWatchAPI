@@ -1,0 +1,80 @@
+###
+# nwa-subscriptions.http
+# Subscription Management Endpoints Test File
+###
+
+@host = http://localhost:8080
+
+# Make sure memberUUID exists from previous user tests
+@memberUUID = 11ef345b-b8c3-40b1-8bb3-1791e0508cea
+
+###
+# 1) Create a Subscription
+###
+POST {{host}}/api/subscriptions/{{memberUUID}}?type=Monthly&status=ACTIVE&startDate=2025-10-01&endDate=2025-10-31
+
+> {%
+    client.test("Create Subscription: Status 200", function() {
+        client.assert(response.status === 200, "Failed to create subscription");
+        var sub = response.body;
+        client.global.set("subscriptionUUID", sub.subscriptionUUID);
+    })
+%}
+
+###
+# 2) Get all Subscriptions
+###
+GET {{host}}/api/subscriptions
+Accept: application/json
+
+> {%
+    client.test("Get all subscriptions: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve subscriptions");
+    })
+%}
+
+###
+# 3) Get Subscription by UUID
+###
+GET {{host}}/api/subscriptions/{{subscriptionUUID}}
+Accept: application/json
+
+> {%
+    client.test("Get subscription by UUID: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve subscription");
+    })
+%}
+
+###
+# 4) Update Subscription (change type, status, endDate)
+###
+PUT {{host}}/api/subscriptions/{{subscriptionUUID}}?type=Annually&status=IN_ARREARS&endDate=2026-10-01
+
+> {%
+    client.test("Update Subscription: Status 200", function() {
+        client.assert(response.status === 200, "Failed to update subscription");
+    })
+%}
+
+###
+# 5) Delete Subscription
+###
+DELETE {{host}}/api/subscriptions/{{subscriptionUUID}}
+
+> {%
+    client.test("Delete Subscription: Status 204", function() {
+        client.assert(response.status === 204, "Failed to delete subscription");
+    })
+%}
+
+###
+# 6) Confirm deletion should return 404
+###
+GET {{host}}/api/subscriptions/{{subscriptionUUID}}
+Accept: application/json
+
+> {%
+    client.test("Subscription should be deleted: Expect 404", function() {
+        client.assert(response.status === 404, "Expected 404 after deletion");
+    })
+%}

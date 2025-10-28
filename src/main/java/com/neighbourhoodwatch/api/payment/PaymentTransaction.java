@@ -44,7 +44,7 @@ public class PaymentTransaction {
     @CreationTimestamp
     private Instant paidAt;
 
-    @Column(length = 255, unique = true)
+    @Column(unique = true)
     private String reference;
 
     @PrePersist

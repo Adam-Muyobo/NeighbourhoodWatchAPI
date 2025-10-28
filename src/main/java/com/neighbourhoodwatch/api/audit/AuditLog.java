@@ -28,7 +28,7 @@ public class AuditLog {
     private String auditUUID;
 
     /**
-     * The user who performed the action (may be null for system events).
+     * The user who performed the action (might be null for system events).
      */
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "actor_id", foreignKey = @ForeignKey(name = "fk_audit_actor"))

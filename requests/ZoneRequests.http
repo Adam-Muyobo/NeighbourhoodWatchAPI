@@ -1,0 +1,88 @@
+###
+# nwa-zones.http
+# Zone Management Endpoints Test File
+###
+
+@host = http://localhost:8080
+
+###
+# 1) Create a Zone
+###
+POST {{host}}/api/zones
+Content-Type: application/json
+
+{
+  "name": "Zone A",
+  "description": "Primary watch area"
+}
+
+> {%
+    client.test("Create Zone: Status 200", function() {
+        client.assert(response.status === 200, "Failed to create zone");
+        var zone = response.body;
+        client.global.set("zoneId", zone.zoneId);
+        client.global.set("zoneUUID", zone.zoneUUID);
+    })
+%}
+
+###
+# 2) Get All Zones
+###
+GET {{host}}/api/zones
+Accept: application/json
+
+> {%
+    client.test("Get all zones: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve zones");
+    })
+%}
+
+###
+# 3) Get Zone by UUID
+###
+GET {{host}}/api/zones/{{zoneUUID}}
+
+> {%
+    client.test("Get Zone by UUID: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve zone by UUID");
+    })
+%}
+
+###
+# 4) Update Zone
+###
+PUT {{host}}/api/zones/{{zoneUUID}}
+Content-Type: application/json
+
+{
+  "name": "Zone A Updated",
+  "description": "Refined zone patrol coverage"
+}
+
+> {%
+    client.test("Update Zone: Status 200", function() {
+        client.assert(response.status === 200, "Failed to update zone");
+    })
+%}
+
+###
+# 5) Delete Zone
+###
+DELETE {{host}}/api/zones/{{zoneUUID}}
+
+> {%
+    client.test("Delete Zone: Status 200", function() {
+        client.assert(response.status === 200, "Failed to delete zone");
+    })
+%}
+
+###
+# 7) Verify deletion should give 404
+###
+GET {{host}}/api/zones/{{zoneUUID}}
+
+> {%
+    client.test("Zone should no longer exist", function() {
+        client.assert(response.status === 404, "Expected 404 after deletion");
+    })
+%}

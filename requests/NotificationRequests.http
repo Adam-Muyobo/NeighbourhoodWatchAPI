@@ -1,0 +1,76 @@
+###
+# nwa-notifications.http
+# Notification Management Endpoints Test File
+###
+
+@host = http://localhost:8080
+# Use existing userUUID from User tests
+@userUUID = 11ef345b-b8c3-40b1-8bb3-1791e0508cea
+
+###
+# 1) Create a Notification
+###
+POST {{host}}/api/notifications/{{userUUID}}?title=Welcome&message=Your subscription is active&type=INFO
+
+> {%
+    client.test("Create Notification: Status 200", function() {
+        client.assert(response.status === 200, "Failed to create notification");
+        var notification = response.body;
+        client.global.set("notificationUUID", notification.notificationUUID);
+    })
+%}
+
+###
+# 2) Get all Notifications
+###
+GET {{host}}/api/notifications
+
+> {%
+    client.test("Get all notifications: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve notifications");
+    })
+%}
+
+###
+# 3) Get Notification by UUID
+###
+GET {{host}}/api/notifications/{{notificationUUID}}
+
+> {%
+    client.test("Get Notification by UUID: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve notification");
+    })
+%}
+
+###
+# 4) Update Notification Status
+###
+PUT {{host}}/api/notifications/{{notificationUUID}}?status=READ
+
+> {%
+    client.test("Update Notification Status: Status 200", function() {
+        client.assert(response.status === 200, "Failed to update notification status");
+    })
+%}
+
+###
+# 5) Delete Notification
+###
+DELETE {{host}}/api/notifications/{{notificationUUID}}
+
+> {%
+    client.test("Delete Notification: Status 204", function() {
+        client.assert(response.status === 204, "Failed to delete notification");
+    })
+%}
+
+###
+# 6) Confirm deletion should return 404
+###
+GET {{host}}/api/notifications/{{notificationUUID}}
+
+> {%
+    client.test("Notification should be deleted: Expect 404", function() {
+        client.assert(response.status === 404, "Expected 404 after deletion");
+    })
+%}

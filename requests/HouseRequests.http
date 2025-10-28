@@ -1,0 +1,94 @@
+###
+# nwa-houses.http
+# House Management Endpoints Test File
+###
+
+@host = http://localhost:8080
+
+
+###
+# 1) Create a House
+###
+POST {{host}}/api/houses
+Content-Type: application/json
+
+{
+  "nameOrNumber": "House 101",
+  "location": "Central Street"
+}
+
+> {%
+    client.test("Create House: Status 200", function() {
+        client.assert(response.status === 200, "Failed to create house");
+        var house = response.body;
+        client.global.set("houseId", house.houseId);
+        client.global.set("houseUUID", house.houseUUID);
+    })
+%}
+
+
+###
+# 2) Get All Houses
+###
+GET {{host}}/api/houses
+Accept: application/json
+
+> {%
+    client.test("Get all houses: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve houses");
+    })
+%}
+
+
+###
+# 3) Get House by UUID
+###
+GET {{host}}/api/houses/{{houseUUID}}
+
+> {%
+    client.test("Get House by UUID: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve house");
+    })
+%}
+
+
+###
+# 4) Update House
+###
+PUT {{host}}/api/houses/{{houseUUID}}
+Content-Type: application/json
+
+{
+  "nameOrNumber": "Muyobo Manor",
+  "location": "Near Main Gate"
+}
+
+> {%
+    client.test("Update House: Status 200", function() {
+        client.assert(response.status === 200, "Failed to update house");
+    })
+%}
+
+
+###
+# 5) Delete House
+###
+DELETE {{host}}/api/houses/{{houseUUID}}
+
+> {%
+    client.test("Delete House: Status 200", function() {
+        client.assert(response.status === 200, "Failed to delete house");
+    })
+%}
+
+
+###
+# 6) Confirm deletion should return 404
+###
+GET {{host}}/api/houses/{{houseUUID}}
+
+> {%
+    client.test("House should be deleted: Expect 404", function() {
+        client.assert(response.status === 404, "Expected 404 after deletion");
+    })
+%}

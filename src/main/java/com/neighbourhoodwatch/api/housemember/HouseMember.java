@@ -1,5 +1,6 @@
 package com.neighbourhoodwatch.api.housemember;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.neighbourhoodwatch.api.house.House;
 import com.neighbourhoodwatch.api.user.User;
 import jakarta.persistence.*;
@@ -34,12 +35,15 @@ public class HouseMember {
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_house_member_user"))
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private User user;
 
     @ManyToOne(optional = false, fetch = FetchType.LAZY)
     @JoinColumn(name = "house_id", nullable = false,
             foreignKey = @ForeignKey(name = "fk_house_member_house"))
+    @JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
     private House house;
+
 
     @Column(nullable = false, length = 50)
     private String relationship;

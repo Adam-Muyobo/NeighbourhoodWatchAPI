@@ -1,0 +1,97 @@
+###
+# nwa-housemembers.http
+# House Member Endpoints Test File
+###
+
+@host = http://localhost:8080
+
+# You must manually set an existing userUUID & houseUUID before running test 1
+
+@userUUID = 11ef345b-b8c3-40b1-8bb3-1791e0508cea
+@houseUUID = 35f55cf4-ebdb-4706-a2d9-47ff0f2b1b5c
+
+
+###
+# 1) Add House Member
+###
+POST {{host}}/api/house-members/{{userUUID}}/{{houseUUID}}?relationship=Owner
+
+> {%
+    client.test("Add House Member: Status 200", function() {
+        client.assert(response.status === 200, "Failed to add member");
+        var member = response.body;
+        client.global.set("houseMemberUUID", member.houseMemberUUID);
+    })
+%}
+
+
+###
+# 2) Get All House Members
+###
+GET {{host}}/api/house-members
+
+> {%
+    client.test("Get all members: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve members");
+    })
+%}
+
+
+###
+# 3) Get Member by UUID
+###
+GET {{host}}/api/house-members/{{houseMemberUUID}}
+
+> {%
+    client.test("Get Member by UUID: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve member");
+    })
+%}
+
+
+###
+# 4) Update Relationship
+###
+PUT {{host}}/api/house-members/{{houseMemberUUID}}?relationship=Tenant
+
+> {%
+    client.test("Update Member: Status 200", function() {
+        client.assert(response.status === 200, "Failed to update relationship");
+    })
+%}
+
+
+###
+# 5) End Membership (soft exit)
+###
+PUT {{host}}/api/house-members/{{houseMemberUUID}}/end
+
+> {%
+    client.test("End Membership: Status 200", function() {
+        client.assert(response.status === 200, "Failed to end membership");
+    })
+%}
+
+
+###
+# 6) Permanent Delete Membership
+###
+DELETE {{host}}/api/house-members/{{houseMemberUUID}}
+
+> {%
+    client.test("Delete Membership: Status 200", function() {
+        client.assert(response.status === 200, "Failed to delete membership");
+    })
+%}
+
+
+###
+# 7) Confirm Deletion
+###
+GET {{host}}/api/house-members/{{houseMemberUUID}}
+
+> {%
+    client.test("Membership should be deleted: Expect 404", function() {
+        client.assert(response.status === 404, "Expected 404");
+    })
+%}

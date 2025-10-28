@@ -1,0 +1,77 @@
+###
+# nwa-sosalerts.http
+# SOS Alert Management Endpoints Test File
+###
+
+@host = http://localhost:8080
+# Use existing memberUUID and optionally checkpointUUID
+@memberUUID = 11ef345b-b8c3-40b1-8bb3-1791e0508cea
+@checkpointUUID = 3f674554-5558-4af1-8e2e-08cb15a05ce0
+
+###
+# 1) Create SOS Alert
+###
+POST {{host}}/api/sos/{{memberUUID}}?description=Suspicious activity detected&geoLat=-24.654321&geoLng=25.912345&checkpointUUID={{checkpointUUID}}
+
+> {%
+    client.test("Create SOS Alert: Status 200", function() {
+        client.assert(response.status === 200, "Failed to create SOS alert");
+        var alert = response.body;
+        client.global.set("sosUUID", alert.sosUUID);
+    })
+%}
+
+###
+# 2) Get all SOS Alerts
+###
+GET {{host}}/api/sos
+
+> {%
+    client.test("Get all SOS Alerts: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve SOS alerts");
+    })
+%}
+
+###
+# 3) Get SOS Alert by UUID
+###
+GET {{host}}/api/sos/{{sosUUID}}
+
+> {%
+    client.test("Get SOS Alert by UUID: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve SOS alert");
+    })
+%}
+
+###
+# 4) Update SOS Alert Status
+###
+PUT {{host}}/api/sos/{{sosUUID}}?status=RESOLVED
+
+> {%
+    client.test("Update SOS Alert Status: Status 200", function() {
+        client.assert(response.status === 200, "Failed to update SOS alert status");
+    })
+%}
+
+###
+# 5) Delete SOS Alert
+###
+DELETE {{host}}/api/sos/{{sosUUID}}
+
+> {%
+    client.test("Delete SOS Alert: Status 204", function() {
+        client.assert(response.status === 204, "Failed to delete SOS alert");
+    })
+%}
+
+###
+# 6) Confirm deletion should return 404
+###
+GET {{host}}/api/sos/{{sosUUID}}
+
+> {%
+    client.test("SOS Alert should be deleted: Expect 404", function() {
+        client.assert(response.status === 404, "Expected 404 after deletion");
+    })
+%}

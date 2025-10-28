@@ -1,0 +1,65 @@
+###
+# nwa-auditlogs.http
+# Audit Log Management Endpoints Test File
+###
+
+@host = http://localhost:8080
+# Replace with actual actor UUID if needed
+@actorUUID = 11ef345b-b8c3-40b1-8bb3-1791e0508cea
+
+###
+# 1) Create Audit Log
+###
+POST {{host}}/api/auditlogs?actionType=CREATE_USER&actorUUID={{actorUUID}}&targetType=USER&targetId=5&details={"info":"Created new user"}
+
+> {%
+    client.test("Create Audit Log: Status 200", function() {
+        client.assert(response.status === 200, "Failed to create audit log");
+        var log = response.body;
+        client.global.set("auditUUID", log.auditUUID);
+    })
+%}
+
+###
+# 2) Get all Audit Logs
+###
+GET {{host}}/api/auditlogs
+
+> {%
+    client.test("Get all Audit Logs: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve audit logs");
+    })
+%}
+
+###
+# 3) Get Audit Log by UUID
+###
+GET {{host}}/api/auditlogs/{{auditUUID}}
+
+> {%
+    client.test("Get Audit Log by UUID: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve audit log");
+    })
+%}
+
+###
+# 4) Delete Audit Log
+###
+DELETE {{host}}/api/auditlogs/{{auditUUID}}
+
+> {%
+    client.test("Delete Audit Log: Status 204", function() {
+        client.assert(response.status === 204, "Failed to delete audit log");
+    })
+%}
+
+###
+# 5) Confirm deletion should return 404
+###
+GET {{host}}/api/auditlogs/{{auditUUID}}
+
+> {%
+    client.test("Audit Log should be deleted: Expect 404", function() {
+        client.assert(response.status === 404, "Expected 404 after deletion");
+    })
+%}

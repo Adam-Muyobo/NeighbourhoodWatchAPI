@@ -1,0 +1,76 @@
+###
+# nwa-payments.http
+# Payment Transaction Endpoints Test File
+###
+
+@host = http://localhost:8080
+# Use existing subscriptionUUID from Subscription tests
+@subscriptionUUID = fecc74ea-7ef7-4ac6-8821-06ee3cad354e
+
+###
+# 1) Create a Payment
+###
+POST {{host}}/api/payments/{{subscriptionUUID}}?amount=200.00&paymentMethod=CASH&reference=TXN-001
+
+> {%
+    client.test("Create Payment: Status 200", function() {
+        client.assert(response.status === 200, "Failed to create payment");
+        var payment = response.body;
+        client.global.set("paymentUUID", payment.paymentUUID);
+    })
+%}
+
+###
+# 2) Get all Payments
+###
+GET {{host}}/api/payments
+
+> {%
+    client.test("Get all payments: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve payments");
+    })
+%}
+
+###
+# 3) Get Payment by UUID
+###
+GET {{host}}/api/payments/{{paymentUUID}}
+
+> {%
+    client.test("Get Payment by UUID: Status 200", function() {
+        client.assert(response.status === 200, "Failed to retrieve payment");
+    })
+%}
+
+###
+# 4) Update Payment
+###
+PUT {{host}}/api/payments/{{paymentUUID}}?amount=250.00&paymentMethod=MOBILE_MONEY
+
+> {%
+    client.test("Update Payment: Status 200", function() {
+        client.assert(response.status === 200, "Failed to update payment");
+    })
+%}
+
+###
+# 5) Delete Payment
+###
+DELETE {{host}}/api/payments/{{paymentUUID}}
+
+> {%
+    client.test("Delete Payment: Status 204", function() {
+        client.assert(response.status === 204, "Failed to delete payment");
+    })
+%}
+
+###
+# 6) Confirm deletion should return 404
+###
+GET {{host}}/api/payments/{{paymentUUID}}
+
+> {%
+    client.test("Payment should be deleted: Expect 404", function() {
+        client.assert(response.status === 404, "Expected 404 after deletion");
+    })
+%}

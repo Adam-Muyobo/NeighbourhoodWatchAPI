@@ -235,11 +235,11 @@ POST {{host}}/api/users/admin/{{adminId}}/create
 Content-Type: application/json
 
 {
-  "name": "Created by Admin",
-  "email": "admincreated@nwa.test",
-  "phoneNumber": "+26770000002",
-  "password": "admincreatedpass",
-  "role": "MEMBER"
+  "name": "David Goliath",
+  "email": "dave@gmail.com",
+  "phoneNumber": "+267799929200",
+  "password": "password",
+  "role": "OFFICER"
 }
 
 > {%
