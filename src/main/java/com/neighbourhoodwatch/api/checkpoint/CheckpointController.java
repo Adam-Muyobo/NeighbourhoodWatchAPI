@@ -24,6 +24,11 @@ public class CheckpointController {
         return ResponseEntity.ok(service.getByUUID(uuid));
     }
 
+    @GetMapping("/code/{code}")
+    public ResponseEntity<CheckpointDTO> getByCode(@PathVariable String code) {
+        return ResponseEntity.ok(service.getByCode(code));
+    }
+
     @PostMapping
     public ResponseEntity<CheckpointDTO> create(@RequestBody CheckpointDTO dto) {
         return ResponseEntity.ok(service.create(dto));

@@ -20,6 +20,7 @@ public class CheckpointService {
     private CheckpointDTO toDTO(Checkpoint entity) {
         return CheckpointDTO.builder()
                 .checkpointUUID(entity.getCheckpointUUID())
+                .code(entity.getCode())
                 .name(entity.getName())
                 .type(entity.getType())
                 .description(entity.getDescription())
@@ -27,6 +28,7 @@ public class CheckpointService {
                 .location(entity.getLocation())
                 .build();
     }
+
 
     public List<CheckpointDTO> getAll() {
         return repository.findAll().stream().map(this::toDTO).toList();
@@ -37,6 +39,12 @@ public class CheckpointService {
                 .orElseThrow(() -> new RuntimeException("Checkpoint not found")));
     }
 
+    public CheckpointDTO getByCode(String code) {
+        return toDTO(repository.findByCode(code)
+                .orElseThrow(() -> new RuntimeException("Checkpoint not found by code")));
+    }
+
+
     public CheckpointDTO create(CheckpointDTO dto) {
         House house = null;
         if (dto.getHouseUUID() != null) {
@@ -44,13 +52,20 @@ public class CheckpointService {
                     .orElseThrow(() -> new RuntimeException("House not found"));
         }
 
+        if (dto.getCode() == null || dto.getCode().isBlank()) {
+            throw new RuntimeException("Checkpoint code is required");
+        }
+
+
         Checkpoint checkpoint = Checkpoint.builder()
+                .code(dto.getCode())
                 .name(dto.getName())
                 .type(dto.getType())
                 .description(dto.getDescription())
                 .location(dto.getLocation())
                 .house(house)
                 .build();
+
 
         return toDTO(repository.save(checkpoint));
     }
@@ -60,6 +75,7 @@ public class CheckpointService {
                 .orElseThrow(() -> new RuntimeException("Checkpoint not found"));
 
         if (dto.getName() != null) checkpoint.setName(dto.getName());
+        if (dto.getCode() != null) checkpoint.setCode(dto.getCode());
         if (dto.getDescription() != null) checkpoint.setDescription(dto.getDescription());
         if (dto.getLocation() != null) checkpoint.setLocation(dto.getLocation());
         if (dto.getType() != null) checkpoint.setType(dto.getType());

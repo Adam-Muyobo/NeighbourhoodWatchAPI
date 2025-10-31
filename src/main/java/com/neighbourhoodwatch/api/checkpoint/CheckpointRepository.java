@@ -6,4 +6,5 @@ import java.util.Optional;
 
 public interface CheckpointRepository extends JpaRepository<Checkpoint, Long> {
     Optional<Checkpoint> findByCheckpointUUID(String uuid);
+    Optional<Checkpoint> findByCode(String code);
 }

@@ -29,6 +29,10 @@ public class Checkpoint {
     @Column(nullable = false, unique = true, length = 36)
     private String checkpointUUID;
 
+    @Column(nullable = false, unique = true, length = 50)
+    private String code; // e.g. HOU001, entered by the user
+
+
     @Column(nullable = false, length = 100)
     private String name;
 

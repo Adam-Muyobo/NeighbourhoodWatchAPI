@@ -10,6 +10,7 @@ import lombok.*;
 @Builder
 public class CheckpointDTO {
     private String checkpointUUID;
+    private String code;
     private String name;
     private CheckpointType type;
     private String description;
